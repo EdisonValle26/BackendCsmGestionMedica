@@ -7,7 +7,6 @@ import { ChatbotModule } from './module/chatbot/chatbot.module';
 import { DoctorsModule } from './module/doctors/doctors.module';
 import { MedicalRecordsModule } from './module/medical-records/medical-records.module';
 import { PatientsModule } from './module/patients/patients.module';
-import { PersonsModule } from './module/persons/persons.module';
 import { ProfilesModule } from './module/profiles/profiles.module';
 import { RolesModule } from './module/roles/roles.module';
 import { UsersModule } from './module/users/users.module';
@@ -26,7 +25,6 @@ import { PrismaModule } from './prisma/prisma.module';
     DoctorsModule,
     MedicalRecordsModule,
     PatientsModule,
-    PersonsModule,
     ProfilesModule,
     RolesModule,
     UsersModule

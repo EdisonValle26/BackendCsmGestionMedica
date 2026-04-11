@@ -48,7 +48,6 @@ export class ChatbotService {
 
         // IA
         const intent = await this.ai.detectIntent(dto.message);
-        console.log('🧠 IA RESULT:', intent);
 
         // actualizar intent solo si no existe
         if (!session.intent) {
@@ -62,7 +61,6 @@ export class ChatbotService {
                 const specialty = await this.actions.findSpecialtyByName(
                     intent.data.specialty
                 );
-
 
                 if (specialty) {
                     session.data.specialty_id = specialty.id;

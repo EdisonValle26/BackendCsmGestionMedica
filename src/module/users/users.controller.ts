@@ -13,6 +13,7 @@ import { RolesGuard } from 'src/common/Guards/roles.guard';
 import { Roles } from 'src/common/decorators/roles.decorator';
 import { User } from 'src/common/decorators/user.decorator';
 import { CreateUserDto } from 'src/dto/create-user.dto';
+import { UpdateUserDto } from 'src/dto/update-user.dto';
 import { UsersService } from './users.service';
 
 @Controller('users')
@@ -37,7 +38,7 @@ export class UsersController {
   @Put(':id')
   updateUser(
     @Param('id') id: string,
-    @Body() dto: CreateUserDto,
+    @Body() dto: UpdateUserDto,
     @User('sub') adminId: number
   ) {
     return this.usersService.updateUser(

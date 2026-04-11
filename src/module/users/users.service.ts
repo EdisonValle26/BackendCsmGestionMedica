@@ -30,8 +30,6 @@ export class UsersService {
 
         const hashedPassword = await bcrypt.hash(dto.password, 10);
 
-        const now = new Date();
-
         const person = await this.prisma.persons.create({
             data: {
                 identification: dto.identification,
@@ -44,7 +42,7 @@ export class UsersService {
                 phone: dto.phone,
                 email: dto.email,
                 address: dto.address,
-                created_at: now,
+                created_at: new Date(),
                 created_by: adminId,
             },
         });
@@ -54,7 +52,7 @@ export class UsersService {
                 person_id: person.id,
                 username: dto.username,
                 password: hashedPassword,
-                created_at: now,
+                created_at: new Date(),
                 created_by: adminId,
             },
         });
