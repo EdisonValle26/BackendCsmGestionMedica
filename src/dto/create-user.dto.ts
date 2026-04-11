@@ -11,34 +11,34 @@ import {
 export class CreateUserDto {
     @IsString()
     @IsNotEmpty()
-    identification: string;
+    identification!: string;
 
     @IsNumber()
-    document_type_id: number;
+    document_type_id!: number;
 
     @IsString()
     @IsNotEmpty()
-    first_name: string;
+    first_name!: string;
 
     @IsString()
     @IsNotEmpty()
-    last_name: string;
+    last_name!: string;
 
     @IsDateString()
-    birth_date: string;
+    birth_date!: string;
 
     @IsNumber()
-    gender_id: number;
+    gender_id!: number;
 
     @IsNumber()
-    nationality_id: number;
+    nationality_id!: number;
+
+    @IsEmail()
+    email!: string;
 
     @IsString()
     @IsOptional()
     phone?: string;
-
-    @IsEmail()
-    email: string;
 
     @IsString()
     @IsOptional()
@@ -46,12 +46,12 @@ export class CreateUserDto {
 
     @IsString()
     @IsNotEmpty()
-    username: string;
+    username!: string;
 
     @IsString()
     @MinLength(8)
-    password: string;
+    password!: string;
 
     @IsNumber()
-    role_id: number;
+    role_id!: number;
 }
