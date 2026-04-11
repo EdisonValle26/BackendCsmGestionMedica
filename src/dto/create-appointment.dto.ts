@@ -7,25 +7,28 @@ import {
 
 export class CreateAppointmentDto {
     @IsNumber()
-    patient_id: number;
+    patient_id!: number;
 
     @IsNumber()
-    doctor_id: number;
+    doctor_id!: number;
 
     @IsNumber()
-    specialty_id: number;
+    specialty_id!: number;
 
     @IsDateString()
-    appointment_date: string;
+    appointment_date!: string;
 
     @IsString()
-    appointment_time: string;
+    appointment_time!: string;
 
     @IsNumber()
-    duration_minutes: number;
+    duration_minutes!: number;
 
     @IsNumber()
-    appointment_type_id: number;
+    appointment_type_id!: number;
+
+    @IsNumber()
+    appointment_status_id!: number;
 
     @IsString()
     @IsOptional()

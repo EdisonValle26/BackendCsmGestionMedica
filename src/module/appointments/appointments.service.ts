@@ -9,6 +9,28 @@ import { CreateAppointmentDto } from '../../dto/create-appointment.dto';
 export class AppointmentsService {
     constructor(private prisma: PrismaService) { }
 
+    async findAll() {
+        return this.prisma.appointments.findMany({
+            where: {
+                deleted_at: null,
+            },
+            include: {
+                patients: {
+                    include: {
+                        persons: true,
+                    },
+                },
+                doctors: {
+                    include: {
+                        persons: true,
+                    },
+                },
+                specialties: true,
+                catalogs_appointments_status_idTocatalogs: true,
+            },
+        });
+    }
+
     async create(dto: CreateAppointmentDto, userId: number) {
         const now = new Date();
 
@@ -74,36 +96,14 @@ export class AppointmentsService {
                 ...dto,
                 appointment_date: new Date(dto.appointment_date),
                 appointment_time: appointmentDateTime,
-                status_id: 1, // AGENDADA (catálogo)
+                status_id: dto.appointment_status_id,
                 created_at: now,
                 created_by: userId,
             },
         });
     }
 
-    async findAll() {
-        return this.prisma.appointments.findMany({
-            where: {
-                deleted_at: null,
-            },
-            include: {
-                patients: {
-                    include: {
-                        persons: true,
-                    },
-                },
-                doctors: {
-                    include: {
-                        persons: true,
-                    },
-                },
-                specialties: true,
-                catalogs_appointments_status_idTocatalogs: true,
-            },
-        });
-    }
-
-    async cancel(id: number, userId: number) {
+    async update(id: number, dto: CreateAppointmentDto, userId: number) {
         const appointment = await this.prisma.appointments.findUnique({
             where: { id },
         });
@@ -112,10 +112,23 @@ export class AppointmentsService {
             throw new BadRequestException('Cita no existe');
         }
 
+        const now = new Date();
+
+        const appointmentDateTime = new Date(
+            `${dto.appointment_date}T${dto.appointment_time}`,
+        );
+
+        if (appointmentDateTime < now) {
+            throw new BadRequestException('No puedes agendar en el pasado');
+        }
+
         return this.prisma.appointments.update({
             where: { id },
             data: {
-                status_id: 2, // CANCELADA
+                ...dto,
+                appointment_date: new Date(dto.appointment_date),
+                appointment_time: appointmentDateTime,
+                status_id: dto.appointment_status_id,
                 updated_at: new Date(),
                 updated_by: userId,
             },
