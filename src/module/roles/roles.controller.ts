@@ -1,8 +1,9 @@
-import { Body, Controller, Delete, Get, Param, Post, Put, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from 'src/common/Guards/jwt-auth.guard';
 import { RolesGuard } from 'src/common/Guards/roles.guard';
 import { Roles } from 'src/common/decorators/roles.decorator';
 import { User } from 'src/common/decorators/user.decorator';
+import { BaseDto } from 'src/dto/base.dto';
 import { CreateRolDto } from 'src/dto/create-rol.dto';
 import { RolesService } from './roles.service';
 
@@ -28,8 +29,8 @@ export class RolesController {
   }
 
   @Get()
-  findAll() {
-    return this.rolesService.findAll();
+  findAll(@Query() query: BaseDto) {
+    return this.rolesService.findAll(query);
   }
 
   @Put(':id')

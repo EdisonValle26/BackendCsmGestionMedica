@@ -1,4 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
+import { BaseDto } from 'src/dto/base.dto';
 import { CreateRolDto } from 'src/dto/create-rol.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 
@@ -25,19 +26,69 @@ export class RolesService {
             },
         });
 
-
         return {
             message: 'Rol creado correctamente',
             roles
         };
     }
 
-    async findAll() {
-        return this.prisma.roles.findMany({
-            where: {
-                deleted_at: null,
-            }
+    async findAll(query: BaseDto) {
+
+        let page = Number(query.skip) || 1;
+        let limit = Number(query.take) || 10;
+
+        let where: any = {};
+
+        if (query.status) {
+            where.deleted_at =
+                query.status === 'I'
+                    ? { not: null }
+                    : null;
+        } else {
+            where.deleted_at = null;
+        }
+
+        if (query.field && query.value_field) {
+
+            const fields = query.field.split(',');
+
+            where.OR = fields.map((field: string) => ({
+                [field]: {
+                    contains: query.value_field,
+                    mode: 'insensitive',
+                },
+            }));
+        }
+
+        const total = await this.prisma.roles.count({
+            where,
         });
+
+        if (limit >= total) {
+            limit = total || 1;
+            page = 1;
+        }
+
+        const skip = (page - 1) * limit;
+
+        const data = await this.prisma.roles.findMany({
+            where,
+            skip,
+            take: limit,
+            orderBy: {
+                id: 'desc',
+            },
+        });
+
+        const totalPages = total ? Math.ceil(total / limit) : 0;
+
+        return {
+            data,
+            total,
+            totalPages,
+            page,
+            limit,
+        };
     }
 
     async findById(id: number) {
