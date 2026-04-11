@@ -1,0 +1,338 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL_POSTGRES")
+}
+
+model appointments {
+  id                                                  Int               @id @default(autoincrement())
+  patient_id                                          Int?
+  doctor_id                                           Int?
+  specialty_id                                        Int?
+  appointment_date                                    DateTime?         @db.Date
+  appointment_time                                    DateTime?         @db.Time(6)
+  duration_minutes                                    Int?
+  status_id                                           Int?
+  appointment_type_id                                 Int?
+  reason                                              String?
+  notes                                               String?
+  created_at                                          DateTime?         @db.Timestamp(6)
+  updated_at                                          DateTime?         @db.Timestamp(6)
+  deleted_at                                          DateTime?         @db.Timestamp(6)
+  created_by                                          Int?
+  updated_by                                          Int?
+  catalogs_appointments_appointment_type_idTocatalogs catalogs?         @relation("appointments_appointment_type_idTocatalogs", fields: [appointment_type_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  doctors                                             doctors?          @relation(fields: [doctor_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  patients                                            patients?         @relation(fields: [patient_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  specialties                                         specialties?      @relation(fields: [specialty_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  catalogs_appointments_status_idTocatalogs           catalogs?         @relation("appointments_status_idTocatalogs", fields: [status_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  medical_records                                     medical_records[]
+}
+
+model audit_log {
+  id          Int       @id @default(autoincrement())
+  table_name  String?   @db.VarChar(100)
+  record_id   Int?
+  action      String?   @db.VarChar(20)
+  old_data    Json?
+  new_data    Json?
+  user_id     Int?
+  action_date DateTime? @db.Timestamp(6)
+}
+
+model catalog_types {
+  id         Int        @id @default(autoincrement())
+  code       String?    @db.VarChar(50)
+  name       String?    @db.VarChar(100)
+  created_at DateTime?  @db.Timestamp(6)
+  updated_at DateTime?  @db.Timestamp(6)
+  catalogs   catalogs[]
+}
+
+model catalogs {
+  id                                                      Int               @id @default(autoincrement())
+  type_id                                                 Int?
+  code                                                    String?           @db.VarChar(50)
+  value                                                   String?           @db.VarChar(100)
+  description                                             String?
+  is_active                                               Boolean?          @default(true)
+  order_number                                            Int?
+  created_at                                              DateTime?         @db.Timestamp(6)
+  updated_at                                              DateTime?         @db.Timestamp(6)
+  deleted_at                                              DateTime?         @db.Timestamp(6)
+  created_by                                              Int?
+  updated_by                                              Int?
+  appointments_appointments_appointment_type_idTocatalogs appointments[]    @relation("appointments_appointment_type_idTocatalogs")
+  appointments_appointments_status_idTocatalogs           appointments[]    @relation("appointments_status_idTocatalogs")
+  catalog_types                                           catalog_types?    @relation(fields: [type_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  medical_records                                         medical_records[]
+  persons_persons_document_type_idTocatalogs              persons[]         @relation("persons_document_type_idTocatalogs")
+  persons_persons_gender_idTocatalogs                     persons[]         @relation("persons_gender_idTocatalogs")
+  persons_persons_nationality_idTocatalogs                persons[]         @relation("persons_nationality_idTocatalogs")
+}
+
+model chatbot_flows {
+  id              Int              @id @default(autoincrement())
+  intent_id       Int?
+  step_order      Int?
+  question        String?
+  field_name      String?          @db.VarChar(50)
+  chatbot_intents chatbot_intents? @relation(fields: [intent_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model chatbot_intents {
+  id            Int             @id @default(autoincrement())
+  name          String?         @db.VarChar(100)
+  description   String?
+  chatbot_flows chatbot_flows[]
+}
+
+model chatbot_logs {
+  id         Int       @id @default(autoincrement())
+  user_phone String?   @db.VarChar(20)
+  intent_id  Int?
+  message    String?
+  response   String?
+  created_at DateTime? @db.Timestamp(6)
+}
+
+model doctor_schedule {
+  id            Int       @id @default(autoincrement())
+  doctor_id     Int?
+  day_of_week   Int?
+  start_time    DateTime? @db.Time(6)
+  end_time      DateTime? @db.Time(6)
+  slot_duration Int?
+  is_active     Boolean?  @default(true)
+  created_at    DateTime? @db.Timestamp(6)
+  updated_at    DateTime? @db.Timestamp(6)
+  deleted_at    DateTime? @db.Timestamp(6)
+  created_by    Int?
+  updated_by    Int?
+  doctors       doctors?  @relation(fields: [doctor_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model doctor_specialties {
+  id           Int          @id @default(autoincrement())
+  doctor_id    Int?
+  specialty_id Int?
+  doctors      doctors?     @relation(fields: [doctor_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  specialties  specialties? @relation(fields: [specialty_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model doctors {
+  id                 Int                  @id @default(autoincrement())
+  person_id          Int?
+  license_number     String?              @db.VarChar(50)
+  created_at         DateTime?            @db.Timestamp(6)
+  updated_at         DateTime?            @db.Timestamp(6)
+  deleted_at         DateTime?            @db.Timestamp(6)
+  created_by         Int?
+  updated_by         Int?
+  appointments       appointments[]
+  doctor_schedule    doctor_schedule[]
+  doctor_specialties doctor_specialties[]
+  persons            persons?             @relation(fields: [person_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model login_attempts {
+  id           Int       @id @default(autoincrement())
+  username     String?   @db.VarChar(50)
+  ip_address   String?   @db.VarChar(50)
+  success      Boolean?
+  attempt_time DateTime? @db.Timestamp(6)
+}
+
+model medical_records {
+  id             Int           @id @default(autoincrement())
+  appointment_id Int?
+  disease_id     Int?
+  diagnosis      String?
+  treatment      String?
+  observations   String?
+  created_at     DateTime?     @db.Timestamp(6)
+  updated_at     DateTime?     @db.Timestamp(6)
+  deleted_at     DateTime?     @db.Timestamp(6)
+  created_by     Int?
+  updated_by     Int?
+  appointments   appointments? @relation(fields: [appointment_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  catalogs       catalogs?     @relation(fields: [disease_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model options {
+  id              Int               @id @default(autoincrement())
+  name            String?           @db.VarChar(100)
+  route           String?           @db.VarChar(150)
+  icon            String?           @db.VarChar(50)
+  parent_id       Int?
+  created_at      DateTime?         @db.Timestamp(6)
+  updated_at      DateTime?         @db.Timestamp(6)
+  deleted_at      DateTime?         @db.Timestamp(6)
+  created_by      Int?
+  updated_by      Int?
+  profile_options profile_options[]
+}
+
+model password_resets {
+  id         Int       @id @default(autoincrement())
+  user_id    Int?
+  token      String?   @db.VarChar(255)
+  expires_at DateTime? @db.Timestamp(6)
+  used       Boolean?  @default(false)
+  created_at DateTime? @db.Timestamp(6)
+  users      users?    @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model patients {
+  id              Int            @id @default(autoincrement())
+  person_id       Int?
+  medical_history String?
+  created_at      DateTime?      @db.Timestamp(6)
+  updated_at      DateTime?      @db.Timestamp(6)
+  deleted_at      DateTime?      @db.Timestamp(6)
+  created_by      Int?
+  updated_by      Int?
+  appointments    appointments[]
+  persons         persons?       @relation(fields: [person_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model permissions {
+  id         Int       @id @default(autoincrement())
+  name       String?   @db.VarChar(100)
+  code       String?   @db.VarChar(50)
+  created_at DateTime? @db.Timestamp(6)
+  updated_at DateTime? @db.Timestamp(6)
+}
+
+model persons {
+  id                                          Int        @id @default(autoincrement())
+  identification                              String?    @db.VarChar(20)
+  document_type_id                            Int?
+  first_name                                  String?    @db.VarChar(100)
+  last_name                                   String?    @db.VarChar(100)
+  birth_date                                  DateTime?  @db.Date
+  gender_id                                   Int?
+  nationality_id                              Int?
+  phone                                       String?    @db.VarChar(20)
+  email                                       String?    @db.VarChar(100)
+  address                                     String?
+  created_at                                  DateTime?  @db.Timestamp(6)
+  updated_at                                  DateTime?  @db.Timestamp(6)
+  deleted_at                                  DateTime?  @db.Timestamp(6)
+  created_by                                  Int?
+  updated_by                                  Int?
+  doctors                                     doctors[]
+  patients                                    patients[]
+  catalogs_persons_document_type_idTocatalogs catalogs?  @relation("persons_document_type_idTocatalogs", fields: [document_type_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  catalogs_persons_gender_idTocatalogs        catalogs?  @relation("persons_gender_idTocatalogs", fields: [gender_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  catalogs_persons_nationality_idTocatalogs   catalogs?  @relation("persons_nationality_idTocatalogs", fields: [nationality_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  users                                       users[]
+}
+
+model profile_options {
+  id         Int       @id @default(autoincrement())
+  profile_id Int?
+  option_id  Int?
+  options    options?  @relation(fields: [option_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  profiles   profiles? @relation(fields: [profile_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model profiles {
+  id              Int               @id @default(autoincrement())
+  name            String?           @db.VarChar(100)
+  description     String?
+  created_at      DateTime?         @db.Timestamp(6)
+  updated_at      DateTime?         @db.Timestamp(6)
+  deleted_at      DateTime?         @db.Timestamp(6)
+  created_by      Int?
+  updated_by      Int?
+  profile_options profile_options[]
+  user_profiles   user_profiles[]
+}
+
+model roles {
+  id          Int          @id @default(autoincrement())
+  name        String?      @db.VarChar(50)
+  description String?
+  created_at  DateTime?    @db.Timestamp(6)
+  updated_at  DateTime?    @db.Timestamp(6)
+  deleted_at  DateTime?    @db.Timestamp(6)
+  created_by  Int?
+  updated_by  Int?
+  user_roles  user_roles[]
+}
+
+model specialties {
+  id                 Int                  @id @default(autoincrement())
+  name               String?              @db.VarChar(100)
+  created_at         DateTime?            @db.Timestamp(6)
+  updated_at         DateTime?            @db.Timestamp(6)
+  deleted_at         DateTime?            @db.Timestamp(6)
+  created_by         Int?
+  updated_by         Int?
+  appointments       appointments[]
+  doctor_specialties doctor_specialties[]
+}
+
+model user_profiles {
+  id         Int       @id @default(autoincrement())
+  user_id    Int?
+  profile_id Int?
+  profiles   profiles? @relation(fields: [profile_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  users      users?    @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model user_roles {
+  id      Int    @id @default(autoincrement())
+  user_id Int?
+  role_id Int?
+  roles   roles? @relation(fields: [role_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  users   users? @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model user_sessions {
+  id         Int       @id @default(autoincrement())
+  user_id    Int?
+  token      String?
+  ip_address String?   @db.VarChar(50)
+  user_agent String?
+  is_active  Boolean?  @default(true)
+  expires_at DateTime? @db.Timestamp(6)
+  created_at DateTime? @db.Timestamp(6)
+  users      users?    @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model users {
+  id              Int               @id @default(autoincrement())
+  person_id       Int?
+  username        String?           @unique @db.VarChar(50)
+  password        String?           @db.VarChar(255)
+  is_active       Boolean?          @default(true)
+  is_locked       Boolean?          @default(false)
+  failed_attempts Int?              @default(0)
+  last_login      DateTime?         @db.Timestamp(6)
+  created_at      DateTime?         @db.Timestamp(6)
+  updated_at      DateTime?         @db.Timestamp(6)
+  deleted_at      DateTime?         @db.Timestamp(6)
+  created_by      Int?
+  updated_by      Int?
+  password_resets password_resets[]
+  user_profiles   user_profiles[]
+  user_roles      user_roles[]
+  user_sessions   user_sessions[]
+  persons         persons?          @relation(fields: [person_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model chatbot_sessions {
+  id         Int       @id @default(autoincrement())
+  session_id String?   @db.VarChar(100)
+  intent     String?   @db.VarChar(50)
+  step       String?   @db.VarChar(50)
+  data       Json?
+  patient_id Int?
+  created_at DateTime? @db.Timestamp(6)
+  updated_at DateTime? @db.Timestamp(6)
+}
