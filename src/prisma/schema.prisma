@@ -163,17 +163,17 @@ model medical_records {
 }
 
 model options {
-  id              Int               @id @default(autoincrement())
-  name            String?           @db.VarChar(100)
-  route           String?           @db.VarChar(150)
-  icon            String?           @db.VarChar(50)
-  parent_id       Int?
-  created_at      DateTime?         @db.Timestamp(6)
-  updated_at      DateTime?         @db.Timestamp(6)
-  deleted_at      DateTime?         @db.Timestamp(6)
-  created_by      Int?
-  updated_by      Int?
-  profile_options profile_options[]
+  id                      Int                       @id @default(autoincrement())
+  name                    String?                   @db.VarChar(100)
+  route                   String?                   @db.VarChar(150)
+  icon                    String?                   @db.VarChar(50)
+  parent_id               Int?
+  created_at              DateTime?                 @db.Timestamp(6)
+  updated_at              DateTime?                 @db.Timestamp(6)
+  deleted_at              DateTime?                 @db.Timestamp(6)
+  created_by              Int?
+  updated_by              Int?
+  role_option_permissions role_option_permissions[]
 }
 
 model password_resets {
@@ -200,11 +200,12 @@ model patients {
 }
 
 model permissions {
-  id         Int       @id @default(autoincrement())
-  name       String?   @db.VarChar(100)
-  code       String?   @db.VarChar(50)
-  created_at DateTime? @db.Timestamp(6)
-  updated_at DateTime? @db.Timestamp(6)
+  id                      Int                       @id @default(autoincrement())
+  name                    String?                   @db.VarChar(100)
+  code                    String?                   @db.VarChar(50)
+  created_at              DateTime?                 @db.Timestamp(6)
+  updated_at              DateTime?                 @db.Timestamp(6)
+  role_option_permissions role_option_permissions[]
 }
 
 model persons {
@@ -232,37 +233,17 @@ model persons {
   users                                       users[]
 }
 
-model profile_options {
-  id         Int       @id @default(autoincrement())
-  profile_id Int?
-  option_id  Int?
-  options    options?  @relation(fields: [option_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  profiles   profiles? @relation(fields: [profile_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-}
-
-model profiles {
-  id              Int               @id @default(autoincrement())
-  name            String?           @db.VarChar(100)
-  description     String?
-  created_at      DateTime?         @db.Timestamp(6)
-  updated_at      DateTime?         @db.Timestamp(6)
-  deleted_at      DateTime?         @db.Timestamp(6)
-  created_by      Int?
-  updated_by      Int?
-  profile_options profile_options[]
-  user_profiles   user_profiles[]
-}
-
 model roles {
-  id          Int          @id @default(autoincrement())
-  name        String?      @db.VarChar(50)
-  description String?
-  created_at  DateTime?    @db.Timestamp(6)
-  updated_at  DateTime?    @db.Timestamp(6)
-  deleted_at  DateTime?    @db.Timestamp(6)
-  created_by  Int?
-  updated_by  Int?
-  user_roles  user_roles[]
+  id                      Int                       @id @default(autoincrement())
+  name                    String?                   @db.VarChar(50)
+  description             String?
+  created_at              DateTime?                 @db.Timestamp(6)
+  updated_at              DateTime?                 @db.Timestamp(6)
+  deleted_at              DateTime?                 @db.Timestamp(6)
+  created_by              Int?
+  updated_by              Int?
+  role_option_permissions role_option_permissions[]
+  user_roles              user_roles[]
 }
 
 model specialties {
@@ -275,14 +256,6 @@ model specialties {
   updated_by         Int?
   appointments       appointments[]
   doctor_specialties doctor_specialties[]
-}
-
-model user_profiles {
-  id         Int       @id @default(autoincrement())
-  user_id    Int?
-  profile_id Int?
-  profiles   profiles? @relation(fields: [profile_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  users      users?    @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
 
 model user_roles {
@@ -320,7 +293,6 @@ model users {
   created_by      Int?
   updated_by      Int?
   password_resets password_resets[]
-  user_profiles   user_profiles[]
   user_roles      user_roles[]
   user_sessions   user_sessions[]
   persons         persons?          @relation(fields: [person_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
@@ -335,4 +307,21 @@ model chatbot_sessions {
   patient_id Int?
   created_at DateTime? @db.Timestamp(6)
   updated_at DateTime? @db.Timestamp(6)
+}
+
+model role_option_permissions {
+  id            Int          @id @default(autoincrement())
+  role_id       Int?
+  option_id     Int?
+  permission_id Int?
+  created_at    DateTime?    @db.Timestamp(6)
+  updated_at    DateTime?    @db.Timestamp(6)
+  deleted_at    DateTime?    @db.Timestamp(6)
+  created_by    Int?
+  updated_by    Int?
+  options       options?     @relation(fields: [option_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  permissions   permissions? @relation(fields: [permission_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  roles         roles?       @relation(fields: [role_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([role_id, option_id, permission_id], map: "unique_role_option_permission")
 }

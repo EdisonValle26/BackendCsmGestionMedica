@@ -6,8 +6,9 @@ import { CatalogsModule } from './module/catalogs/catalogs.module';
 import { ChatbotModule } from './module/chatbot/chatbot.module';
 import { DoctorsModule } from './module/doctors/doctors.module';
 import { MedicalRecordsModule } from './module/medical-records/medical-records.module';
+import { OptionsModule } from './module/options/options.module';
 import { PatientsModule } from './module/patients/patients.module';
-import { ProfilesModule } from './module/profiles/profiles.module';
+import { RoleOptionPermissionsModule } from './module/role-option-permissions/role-option-permissions.module';
 import { RolesModule } from './module/roles/roles.module';
 import { UsersModule } from './module/users/users.module';
 import { PrismaModule } from './prisma/prisma.module';
@@ -25,9 +26,10 @@ import { PrismaModule } from './prisma/prisma.module';
     DoctorsModule,
     MedicalRecordsModule,
     PatientsModule,
-    ProfilesModule,
     RolesModule,
-    UsersModule
+    UsersModule,
+    RoleOptionPermissionsModule,
+    OptionsModule
   ],
   controllers: [],
   providers: [],

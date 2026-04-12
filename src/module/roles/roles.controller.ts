@@ -44,7 +44,7 @@ export class RolesController {
   }
 
   @Delete(':id')
-  deleteUser(
+  delete(
     @Param('id') id: string,
     @User('sub') adminId: number
   ) {

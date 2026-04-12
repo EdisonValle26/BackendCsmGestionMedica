@@ -11,19 +11,6 @@ CREATE table roles (
 )
 
 
-CREATE table profiles (
-  id SERIAL PRIMARY KEY,
-  name VARCHAR(100),
-  description TEXT,
-
-  created_at TIMESTAMP,
-  updated_at TIMESTAMP,
-  deleted_at TIMESTAMP,
-  created_by INTEGER,
-  updated_by INTEGER
-)
-
-
 CREATE table options (
   id SERIAL PRIMARY KEY,
   name VARCHAR(100),
@@ -49,18 +36,15 @@ CREATE table permissions (
 )
 
 
-CREATE table profile_options (
+CREATE TABLE role_option_permissions (
   id SERIAL PRIMARY KEY,
-  profile_id INTEGER REFERENCES profiles(id),
-  option_id INTEGER REFERENCES options(id)
-)
 
-
-CREATE table role_permissions (
-  id SERIAL PRIMARY KEY,
   role_id INTEGER REFERENCES roles(id),
-  permission_id INTEGER REFERENCES permissions(id)
-)
+  option_id INTEGER REFERENCES options(id),
+  permission_id INTEGER REFERENCES permissions(id),
+  CONSTRAINT unique_role_option_permission 
+  UNIQUE (role_id, option_id, permission_id)
+);
 
 
 CREATE table catalog_types (
@@ -136,14 +120,6 @@ CREATE table users (
   created_by INTEGER,
   updated_by INTEGER
 )
-
-
-CREATE table user_profiles (
-  id SERIAL PRIMARY KEY,
-  user_id INTEGER REFERENCES users(id),
-  profile_id INTEGER REFERENCES profiles(id)
-)
-
 
 CREATE table user_roles (
   id SERIAL PRIMARY KEY,
@@ -426,3 +402,8 @@ INSERT INTO user_roles (user_id, role_id)
 VALUES (1, 1);
 
 
+INSERT INTO permissions (name, code) VALUES
+('Crear', 'CREATE'),
+('Leer', 'READ'),
+('Actualizar', 'UPDATE'),
+('Eliminar', 'DELETE');
