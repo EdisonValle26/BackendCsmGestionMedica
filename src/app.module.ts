@@ -11,6 +11,7 @@ import { OptionsModule } from './module/options/options.module';
 import { PatientsModule } from './module/patients/patients.module';
 import { RoleOptionPermissionsModule } from './module/role-option-permissions/role-option-permissions.module';
 import { RolesModule } from './module/roles/roles.module';
+import { SpecialtiesModule } from './module/specialties/specialties.module';
 import { UsersModule } from './module/users/users.module';
 import { PrismaModule } from './prisma/prisma.module';
 
@@ -31,7 +32,8 @@ import { PrismaModule } from './prisma/prisma.module';
     UsersModule,
     RoleOptionPermissionsModule,
     OptionsModule,
-    CatalogTypeModule
+    CatalogTypeModule,
+    SpecialtiesModule
   ],
   controllers: [],
   providers: [],
