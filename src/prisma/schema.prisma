@@ -119,6 +119,11 @@ model doctor_specialties {
   id           Int          @id @default(autoincrement())
   doctor_id    Int?
   specialty_id Int?
+  created_at   DateTime?    @db.Timestamp(6)
+  updated_at   DateTime?    @db.Timestamp(6)
+  deleted_at   DateTime?    @db.Timestamp(6)
+  created_by   Int?
+  updated_by   Int?
   doctors      doctors?     @relation(fields: [doctor_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   specialties  specialties? @relation(fields: [specialty_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }

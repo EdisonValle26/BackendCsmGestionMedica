@@ -197,7 +197,13 @@ CREATE table specialties (
 CREATE table doctor_specialties (
   id SERIAL PRIMARY KEY,
   doctor_id INTEGER REFERENCES doctors(id),
-  specialty_id INTEGER REFERENCES specialties(id)
+  specialty_id INTEGER REFERENCES specialties(id),
+  
+  created_at TIMESTAMP,
+  updated_at TIMESTAMP,
+  deleted_at TIMESTAMP,
+  created_by INTEGER,
+  updated_by INTEGER
 )
 
 
