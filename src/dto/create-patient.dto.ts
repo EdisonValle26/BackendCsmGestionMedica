@@ -1,14 +1,13 @@
 import {
     IsDateString,
-    IsEmail,
     IsNotEmpty,
     IsNumber,
     IsOptional,
     IsString,
-    MinLength,
 } from 'class-validator';
 
-export class CreateUserDto {
+export class CreatePatientDto {
+
     @IsString()
     @IsNotEmpty()
     identification!: string;
@@ -33,29 +32,20 @@ export class CreateUserDto {
     @IsNumber()
     nationality_id!: number;
 
-    @IsEmail()
-    email!: string;
-
     @IsString()
     @IsOptional()
     phone?: string;
 
     @IsString()
     @IsOptional()
-    address?: string;
-
-    @IsString()
-    @IsNotEmpty()
-    username!: string;
-
-    @IsString()
-    @MinLength(8)
-    password!: string;
-
-    @IsNumber()
-    role_id!: number;
+    email?: string;
 
     @IsString()
     @IsOptional()
-    license_number?: string;
+    address?: string;
+
+    // paciente
+    @IsString()
+    @IsOptional()
+    medical_history?: string;
 }

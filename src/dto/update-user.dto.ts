@@ -38,4 +38,8 @@ export class UpdateUserDto {
     @IsNumber()
     @IsOptional()
     nationality_id?: number;
+
+    @IsString()
+    @IsOptional()
+    license_number?: string;
 }

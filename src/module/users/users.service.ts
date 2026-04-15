@@ -64,6 +64,23 @@ export class UsersService {
             },
         });
 
+        const roleCode = await this.prisma.roles.findFirst({
+            where: {
+                id: dto.role_id,
+            },
+        });
+
+        if (roleCode?.name === 'MEDICO') {
+            await this.prisma.doctors.create({
+                data: {
+                    person_id: person.id,
+                    license_number: dto.license_number,
+                    created_at: new Date(),
+                    created_by: adminId
+                },
+            });
+        }
+
         return {
             message: 'Usuario creado correctamente',
         };
@@ -105,6 +122,27 @@ export class UsersService {
             },
         });
 
+
+        if (dto.license_number) {
+
+            const doctor = await this.prisma.doctors.findFirst({
+                where: {
+                    person_id: user.person_id!,
+                    deleted_at: null
+                }
+            });
+
+            if (doctor) {
+                await this.prisma.doctors.update({
+                    where: { id: doctor.id },
+                    data: {
+                        license_number: dto.license_number ? dto.license_number : '',
+                        updated_at: new Date(),
+                        updated_by: adminId
+                    },
+                });
+            }
+        }
         return {
             message: 'Usuario actualizado correctamente',
         };
