@@ -5,6 +5,7 @@ import { AuthModule } from './module/auth/auth.module';
 import { CatalogTypeModule } from './module/catalog-type/catalog-type.module';
 import { CatalogsModule } from './module/catalogs/catalogs.module';
 import { ChatbotModule } from './module/chatbot/chatbot.module';
+import { DoctorScheduleModule } from './module/doctor_schedule/doctor_schedule.module';
 import { DoctorSpecialtiesModule } from './module/doctor_specialties/doctor_specialties.module';
 import { DoctorsModule } from './module/doctors/doctors.module';
 import { MedicalRecordsModule } from './module/medical-records/medical-records.module';
@@ -35,7 +36,8 @@ import { PrismaModule } from './prisma/prisma.module';
     OptionsModule,
     CatalogTypeModule,
     SpecialtiesModule,
-    DoctorSpecialtiesModule
+    DoctorSpecialtiesModule,
+    DoctorScheduleModule
   ],
   controllers: [],
   providers: [],
