@@ -225,7 +225,7 @@ CREATE table doctor_schedule (
   id SERIAL PRIMARY KEY,
   doctor_id INTEGER REFERENCES doctors(id),
 
-  day_of_week INTEGER,
+  schedule_date DATE,
   start_time TIME,
   end_time TIME,
 

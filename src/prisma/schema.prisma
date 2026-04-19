@@ -102,7 +102,7 @@ model chatbot_logs {
 model doctor_schedule {
   id            Int       @id @default(autoincrement())
   doctor_id     Int?
-  day_of_week   Int?
+  schedule_date DateTime? @db.Date
   start_time    DateTime? @db.Time(6)
   end_time      DateTime? @db.Time(6)
   slot_duration Int?

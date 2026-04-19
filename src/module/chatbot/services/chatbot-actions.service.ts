@@ -69,12 +69,11 @@ export class ChatbotActionsService {
     }
 
     async getAvailableSlots(doctorId: number, date: Date) {
-        const dayOfWeek = date.getDay();
 
         const schedule = await this.prisma.doctor_schedule.findFirst({
             where: {
                 doctor_id: doctorId,
-                day_of_week: dayOfWeek,
+                schedule_date: date,
                 is_active: true,
                 deleted_at: null,
             },

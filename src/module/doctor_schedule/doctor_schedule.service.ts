@@ -9,7 +9,7 @@ export class DoctorScheduleService {
 
     async create(dto: CreateDoctorScheduleDto, userId: number) {
 
-        const { doctor_id, day_of_week, start_time, end_time, slot_duration } = dto;
+        const { doctor_id, schedule_date, start_time, end_time, slot_duration } = dto;
 
         // validar doctor
         const doctor = await this.prisma.doctors.findUnique({
@@ -42,11 +42,13 @@ export class DoctorScheduleService {
             throw new BadRequestException('Hora inicio debe ser menor a hora fin');
         }
 
+        const date = new Date(schedule_date)
+
         //validar cruces
         const schedules = await this.prisma.doctor_schedule.findMany({
             where: {
                 doctor_id,
-                day_of_week,
+                schedule_date: date,
                 deleted_at: null,
             },
         });
@@ -67,7 +69,7 @@ export class DoctorScheduleService {
         await this.prisma.doctor_schedule.create({
             data: {
                 doctor_id,
-                day_of_week,
+                schedule_date: date,
                 start_time: start,
                 end_time: end,
                 slot_duration,
@@ -89,12 +91,13 @@ export class DoctorScheduleService {
                 deleted_at: null,
             },
             orderBy: {
-                day_of_week: 'asc',
+                schedule_date: 'asc',
             },
         });
 
         return schedules.map(s => ({
             ...s,
+            schedule_date: s.schedule_date,
             start_time: this.dateToHHMM(s.start_time!),
             end_time: this.dateToHHMM(s.end_time!),
         }));
@@ -128,6 +131,66 @@ export class DoctorScheduleService {
                 ? 'Horario eliminado'
                 : 'Horario restaurado',
         };
+    }
+
+    async getAvailableSlots(doctorId: number, date: string) {
+
+        const appointmentDate = new Date(date);
+
+        // BUSCAR HORARIOS POR FECHA EXACTA
+        const schedules = await this.prisma.doctor_schedule.findMany({
+            where: {
+                doctor_id: doctorId,
+                schedule_date: appointmentDate,
+                deleted_at: null,
+                is_active: true,
+            },
+        });
+
+        if (!schedules.length) {
+            return [];
+        }
+
+        const appointments = await this.prisma.appointments.findMany({
+            where: {
+                doctor_id: doctorId,
+                appointment_date: appointmentDate,
+                deleted_at: null,
+            },
+        });
+
+        const occupied = appointments.map(a => {
+            const start = new Date(a.appointment_time!);
+            const end = new Date(start.getTime() + a.duration_minutes! * 60000);
+            return { start, end };
+        });
+
+        const slots: string[] = [];
+
+        for (const sch of schedules) {
+
+            let current = new Date(sch.start_time!);
+            const end = new Date(sch.end_time!);
+
+            while (current < end) {
+
+                const slotEnd = new Date(
+                    current.getTime() + sch.slot_duration! * 60000
+                );
+
+                const isOccupied = occupied.some(o =>
+                    current < o.end && slotEnd > o.start
+                );
+
+                if (!isOccupied) {
+                    slots.push(current.toISOString().substring(11, 16));
+                }
+
+                current = slotEnd;
+            }
+        }
+
+        return slots;
     }
 
     private timeToMinutes(time: string) {

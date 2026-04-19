@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsNumber, Max, Min } from 'class-validator';
+import { IsDateString, IsNotEmpty, IsNumber, Min } from 'class-validator';
 
 export class CreateDoctorScheduleDto {
 
@@ -6,10 +6,9 @@ export class CreateDoctorScheduleDto {
     @IsNotEmpty()
     doctor_id!: number;
 
-    @IsNumber()
-    @Min(0)
-    @Max(6)
-    day_of_week!: number;
+    @IsDateString()
+    @IsNotEmpty()
+    schedule_date!: string;
 
     @IsNotEmpty()
     start_time!: string; // "08:00"
