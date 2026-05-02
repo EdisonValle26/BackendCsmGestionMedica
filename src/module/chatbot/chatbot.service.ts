@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { ChatbotSessionData } from 'src/common/Interfaces/chatbot-session-data.interface';
 import { ChatbotActionsService } from './services/chatbot-actions.service';
 import { ChatbotAiService } from './services/chatbot-ai.service';
 import { ChatbotFlowService } from './services/chatbot-flow.service';
@@ -17,12 +18,13 @@ export class ChatbotService {
         const sessionId = dto.session_id;
 
         const sessionDb = await this.sessionService.getSession(sessionId);
+        const data = (sessionDb.data as ChatbotSessionData) || {};
 
         // convertir a objeto manejable
         const session = {
-            intent: sessionDb.intent,
-            step: sessionDb.step,
-            data: (sessionDb.data as any) || {},
+            intent_id: sessionDb.intent_id,
+            step: sessionDb.step || 0,
+            data: (sessionDb.data as ChatbotSessionData) || {},
             patient_id: sessionDb.patient_id,
         };
 
@@ -35,12 +37,38 @@ export class ChatbotService {
             }
         }
 
+        // detectar intención de registro manual
+        if (!session.patient_id && dto.message.toLowerCase().includes('registr')) {
+
+            session.data.previous_intent_id = session.intent_id!;
+
+            const registerIntent = await this.actions.findIntentByName('REGISTRAR_PACIENTE');
+
+            session.intent_id = registerIntent?.id!;
+            session.step = 0;
+
+            session.data.phone = sessionId;
+        }
+
         // flujo activo
-        if (session.intent) {
+        if (session.intent_id) {
+
             const response = await this.flowService.handleFlow(
                 session,
                 dto.message,
             );
+
+            if (response?.response === 'Paciente registrado. Continuemos...') {
+
+                const next = await this.flowService.handleFlow(
+                    session,
+                    dto.message,
+                );
+
+                await this.sessionService.updateSession(sessionId, session);
+
+                return next;
+            }
 
             await this.sessionService.updateSession(sessionId, session);
             return response;
@@ -49,9 +77,18 @@ export class ChatbotService {
         // IA
         const intent = await this.ai.detectIntent(dto.message);
 
-        // actualizar intent solo si no existe
-        if (!session.intent) {
-            session.intent = intent.type;
+
+        let intentType = intent.type;
+
+        // mapear intención
+        if (intentType === 'LISTAR_DOCTORES') {
+            intentType = 'AGENDAR_CITA';
+        }
+
+        const intentDb = await this.actions.findIntentByName(intentType);
+
+        if (!session.intent_id && intentDb) {
+            session.intent_id = intentDb.id;
         }
 
         // SIEMPRE intentar rellenar datos
@@ -73,7 +110,7 @@ export class ChatbotService {
                     }
 
                     session.data.doctors = doctors;
-                    session.step = 'ASK_DOCTOR';
+                    session.step = 1;
                 }
             }
         }

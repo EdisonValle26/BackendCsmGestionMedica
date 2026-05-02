@@ -21,7 +21,7 @@ export class ChatbotAiService {
                                         Analiza el mensaje del usuario y responde SOLO en JSON con esta estructura:
 
                                         {
-                                        "type": "AGENDAR_CITA | LISTAR_DOCTORES | SALUDO | UNKNOWN",
+                                        "type": "AGENDAR_CITA | LISTAR_DOCTORES | REGISTRAR_PACIENTE | SALUDO | UNKNOWN",
                                         "data": {
                                             "specialty": string | null,
                                             "date": string | null,

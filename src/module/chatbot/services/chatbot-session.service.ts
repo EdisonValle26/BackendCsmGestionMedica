@@ -24,10 +24,17 @@ export class ChatbotSessionService {
     }
 
     async updateSession(sessionId: string, session: any) {
-        await this.prisma.chatbot_sessions.updateMany({
-            where: { session_id: sessionId },
+
+        const sessionDb = await this.prisma.chatbot_sessions.findUnique({
+            where: { session_id: sessionId }
+        });
+
+        if (!sessionDb) return;
+
+        await this.prisma.chatbot_sessions.update({
+            where: { id: sessionDb.id },
             data: {
-                intent: session.intent,
+                intent_id: session.intent_id,
                 step: session.step,
                 data: session.data,
                 patient_id: session.patient_id,
@@ -40,7 +47,7 @@ export class ChatbotSessionService {
         await this.prisma.chatbot_sessions.updateMany({
             where: { session_id: sessionId },
             data: {
-                intent: null,
+                intent_id: null,
                 step: null,
                 data: {},
                 patient_id: null,

@@ -23,17 +23,53 @@ export class ChatbotActionsService {
     }
 
     async createAppointment(data: any) {
-        return this.prisma.appointments.create({
-            data: {
-                patient_id: data.patient_id,
-                doctor_id: data.doctor_id,
-                specialty_id: data.specialty_id,
-                appointment_date: new Date(data.date),
-                appointment_time: new Date(`1970-01-01T${data.time}`),
-                duration_minutes: 30,
-                created_at: new Date(),
-            },
-        });
+        try {
+
+            const date = data.date instanceof Date ? data.date : this.parseDate(data.date);
+            const time = typeof data.time === 'string' ? data.time : this.parseTime(data.time);
+
+            if (!date || !time || !data.doctor_id || !data.specialty_id) {
+                throw new Error(`Datos incompletos:
+                                doctor_id=${data.doctor_id}
+                                specialty_id=${data.specialty_id}
+                                date=${data.date}
+                                time=${data.time}
+                            `);
+            }
+
+            const [hours, minutes] = time.split(':');
+
+            const appointmentDateTime = new Date(Date.UTC(
+                date.getFullYear(),
+                date.getMonth(),
+                date.getDate(),
+                parseInt(hours),
+                parseInt(minutes),
+                0,
+                0
+            ));
+
+            const result = await this.prisma.appointments.create({
+                data: {
+                    patient_id: data.patient_id,
+                    doctor_id: data.doctor_id,
+                    specialty_id: data.specialty_id,
+                    appointment_date: date,
+                    appointment_time: appointmentDateTime,
+                    duration_minutes: 30,
+                    created_at: new Date(),
+                },
+            });
+
+            if (!result) {
+                return { response: 'Faltan datos para completar la cita, continuemos...' };
+            }
+
+            return result;
+        } catch (error) {
+            console.error('ERROR CREANDO CITA:', error);
+            return null;
+        }
     }
 
     async findSpecialtyByName(name: string) {
@@ -126,5 +162,59 @@ export class ChatbotActionsService {
                 patients: true,
             },
         });
+    }
+
+    async createPatient(data: any) {
+
+        const person = await this.prisma.persons.create({
+            data: {
+                first_name: data.first_name,
+                last_name: data.last_name,
+                phone: data.phone,
+                created_at: new Date(),
+            }
+        });
+
+        const patient = await this.prisma.patients.create({
+            data: {
+                person_id: person.id,
+                created_at: new Date(),
+            }
+        });
+
+        return patient;
+    }
+
+    async findIntentByName(name: string) {
+        return this.prisma.chatbot_intents.findFirst({
+            where: {
+                name: {
+                    equals: name,
+                    mode: 'insensitive'
+                }
+            }
+        });
+    }
+
+    parseDate(dateStr: string): Date | null {
+        if (!dateStr) return null;
+
+        const text = dateStr.toLowerCase();
+
+        if (text.includes('hoy')) {
+            return new Date();
+        }
+
+        const parsed = new Date(dateStr);
+        return isNaN(parsed.getTime()) ? null : parsed;
+    }
+
+    parseTime(timeStr: string): string | null {
+        if (!timeStr) return null;
+
+        const match = timeStr.match(/(\d{1,2}):(\d{2})/);
+        if (!match) return null;
+
+        return `${match[1].padStart(2, '0')}:${match[2]}`;
     }
 }

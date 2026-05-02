@@ -84,10 +84,11 @@ model chatbot_flows {
 }
 
 model chatbot_intents {
-  id            Int             @id @default(autoincrement())
-  name          String?         @db.VarChar(100)
-  description   String?
-  chatbot_flows chatbot_flows[]
+  id               Int                @id @default(autoincrement())
+  name             String?            @db.VarChar(100)
+  description      String?
+  chatbot_flows    chatbot_flows[]
+  chatbot_sessions chatbot_sessions[]
 }
 
 model chatbot_logs {
@@ -304,14 +305,15 @@ model users {
 }
 
 model chatbot_sessions {
-  id         Int       @id @default(autoincrement())
-  session_id String?   @db.VarChar(100)
-  intent     String?   @db.VarChar(50)
-  step       String?   @db.VarChar(50)
-  data       Json?
-  patient_id Int?
-  created_at DateTime? @db.Timestamp(6)
-  updated_at DateTime? @db.Timestamp(6)
+  id              Int              @id @default(autoincrement())
+  session_id      String?          @unique(map: "unique_session") @db.VarChar(100)
+  step            Int?
+  data            Json?
+  patient_id      Int?
+  created_at      DateTime?        @db.Timestamp(6)
+  updated_at      DateTime?        @db.Timestamp(6)
+  intent_id       Int?
+  chatbot_intents chatbot_intents? @relation(fields: [intent_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_chatbot_sessions_intent")
 }
 
 model role_option_permissions {

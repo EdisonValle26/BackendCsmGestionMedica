@@ -1,190 +1,154 @@
 import { Injectable } from "@nestjs/common";
+import { PrismaService } from "src/prisma/prisma.service";
 import { ChatbotActionsService } from "./chatbot-actions.service";
 
 @Injectable()
 export class ChatbotFlowService {
-    constructor(private actions: ChatbotActionsService) { }
+    constructor(
+        private actions: ChatbotActionsService,
+        private prisma: PrismaService
+    ) { }
 
     async handleFlow(session: any, message: string) {
 
-        switch (session.intent) {
+        const steps = await this.getFlowSteps(session.intent_id);
 
-            case 'AGENDAR_CITA':
-                return this.handleAppointmentFlow(session, message);
-
-            default:
-                return { response: 'No hay flujo activo' };
+        if (!steps.length) {
+            return { response: 'No hay flujo configurado' };
         }
+
+        let currentStepIndex = session.step ?? 0;
+
+        const currentStep = steps[currentStepIndex];
+
+        // guardar respuesta del usuario
+        if (currentStepIndex > 0) {
+            const prevStep = steps[currentStepIndex - 1];
+
+            let value: any = message;
+
+            if (prevStep.field_name === 'date') {
+                value = this.actions.parseDate(message);
+            }
+
+            if (prevStep.field_name === 'time') {
+                value = this.actions.parseTime(message);
+            }
+
+            if (prevStep.field_name === 'doctor_id') {
+                const number = message.match(/\d+/); // extrae número
+                const index = number ? parseInt(number[0]) - 1 : -1;
+
+                value = session.data.doctors?.[index]?.doctors?.id;
+            }
+
+            // solo sobrescribir si el valor es válido
+            const field = prevStep.field_name!;
+
+            if (field === 'date' || field === 'time' || field === 'doctor_id') {
+                if (value !== null && value !== undefined) {
+                    session.data[field] = value;
+                }
+            } else {
+                // campos normales (nombre, apellido, etc)
+                session.data[field] = value;
+            }
+        }
+
+        // si terminó flujo
+        if (currentStepIndex >= steps.length) {
+            return this.executeFinalAction(session);
+        }
+
+        // avanzar
+        session.step = currentStepIndex + 1;
+
+        return { response: currentStep.question };
     }
 
-    async handleAppointmentFlow(session: any, message: string) {
-        // SI YA TIENE ESPECIALIDAD, NO PREGUNTAR OTRA VEZ
-        if (session.data.specialty_id && session.step === null) {
-            session.step = 'ASK_DOCTOR';
+    async executeFinalAction(session: any) {
+
+        const intentDb = await this.prisma.chatbot_intents.findUnique({
+            where: { id: session.intent_id }
+        });
+
+        const intentName = intentDb?.name;
+
+        // AGENDAR CITA
+        if (intentName === 'AGENDAR_CITA') {
+            console.log('DATA FINAL CITA:', session.data);
+            if (!session.patient_id) {
+                return { response: 'Primero debes registrarte' };
+            }
+
+            const result = await this.actions.createAppointment({
+                patient_id: session.patient_id,
+                specialty_id: session.data.specialty_id,
+                doctor_id: session.data.doctor_id,
+                date: session.data.date,
+                time: session.data.time,
+            });
+
+            session.intent_id = null;
+            session.step = null;
+            session.data = {};
+
+            if (!result) {
+                return { response: 'No se pudo crear la cita, faltan datos' };
+            }
+
+            return { response: 'Cita creada correctamente' };
         }
 
-        // si ya tiene todo, saltar flujo
-        if (
-            session.data.specialty_id &&
-            session.data.doctor_id &&
-            session.data.date &&
-            session.data.time
-        ) {
-            session.step = 'CONFIRM';
+        // REGISTRAR PACIENTE
+        if (intentName === 'REGISTRAR_PACIENTE') {
+
+            if (session.data.confirm?.toLowerCase() !== 'si') {
+                return { response: 'Registro cancelado' };
+            }
+
+            const patient = await this.actions.createPatient(session.data);
+
+            session.patient_id = patient.id;
+
+            // VOLVER AL INTENT ANTERIOR
+            if (session.data.previous_intent_id) {
+
+                const previousData = {
+                    specialty_id: session.data.specialty_id,
+                    doctor_id: session.data.doctor_id,
+                    date: session.data.date,
+                    time: session.data.time,
+                    doctors: session.data.doctors
+                };
+
+
+                session.intent_id = session.data.previous_intent_id;
+
+                session.step = session.step ?? 0;
+
+                session.data = previousData;
+
+                return { response: 'Paciente registrado. Continuemos...' };
+            }
+
+            session.intent_id = null;
+            session.step = null;
+            session.data = {};
+
+            return { response: 'Paciente registrado correctamente' };
         }
 
-        switch (session.step) {
+        return { response: 'Flujo completado' };
+    }
 
-            // INICIO
-            case null:
+    async getFlowSteps(intentId: number) {
 
-                if (!session.data.specialty_id) {
-                    session.step = 'ASK_SPECIALTY';
-                    return { response: '¿Qué especialidad necesitas?' };
-                }
+        if (!intentId) return [];
 
-                if (!session.data.doctor_id) {
-                    session.step = 'ASK_DOCTOR';
-
-                    const doctors = await this.actions.getDoctorsBySpecialty(
-                        session.data.specialty_id
-                    );
-
-                    if (!doctors.length) {
-                        return { response: 'No hay doctores disponibles' };
-                    }
-
-                    session.data.doctors = doctors;
-
-                    return {
-                        response:
-                            'Selecciona un doctor:\n' +
-                            this.actions.formatDoctors(doctors).join('\n'),
-                    };
-                }
-
-                break;
-
-            // ESPECIALIDAD
-            case 'ASK_SPECIALTY':
-                const specialty = await this.actions.findSpecialtyByName(message);
-
-                if (!specialty) {
-                    return { response: 'Especialidad no encontrada' };
-                }
-
-                session.data.specialty_id = specialty.id;
-
-                const doctors = await this.actions.getDoctorsBySpecialty(specialty.id);
-
-                if (!doctors.length) {
-                    return { response: 'No hay doctores disponibles' };
-                }
-
-                session.data.doctors = doctors;
-
-                session.step = 'ASK_DOCTOR';
-
-                return {
-                    response:
-                        'Selecciona un doctor:\n' +
-                        this.actions.formatDoctors(doctors).join('\n'),
-                };
-
-            // DOCTOR
-            case 'ASK_DOCTOR':
-                const index = parseInt(message) - 1;
-
-                if (isNaN(index) || !session.data.doctors[index]) {
-                    return { response: 'Seleccion inválida' };
-                }
-
-                const doctor = session.data.doctors[index].doctors;
-
-                session.data.doctor_id = doctor.id;
-                session.data.doctor_name =
-                    doctor.persons.first_name + ' ' + doctor.persons.last_name;
-
-                session.step = 'ASK_DATE';
-
-                return { response: '¿Qué fecha deseas? (YYYY-MM-DD)' };
-
-            // FECHA
-            case 'ASK_DATE':
-                const date = new Date(message);
-
-                if (isNaN(date.getTime())) {
-                    return { response: 'Fecha inválida' };
-                }
-
-                session.data.date = message;
-
-                const slots = await this.actions.getAvailableSlots(
-                    session.data.doctor_id,
-                    date,
-                );
-
-                if (!slots.length) {
-                    return { response: 'No hay horarios disponibles' };
-                }
-
-                session.data.available_slots = slots;
-                session.step = 'ASK_TIME';
-
-                return {
-                    response: `Horarios disponibles:\n${slots.join(', ')}`,
-                };
-
-            // HORA
-            case 'ASK_TIME':
-                if (!session.data.available_slots.includes(message)) {
-                    return { response: 'Hora inválida' };
-                }
-
-                session.data.time = message;
-                session.step = 'CONFIRM';
-
-                return {
-                    response:
-                        `Confirma tu cita:\n\n` +
-                        `Doctor: ${session.data.doctor_name}\n` +
-                        `Fecha: ${session.data.date}\n` +
-                        `Hora: ${session.data.time}\n\n` +
-                        `Responde "SI" para confirmar o "NO" para cancelar`,
-                };
-
-            // CONFIRMACIÓN
-            case 'CONFIRM':
-
-                if (!session.patient_id) {
-                    return {
-                        response: 'Debes registrarte primero en la clínica',
-                    };
-                }
-
-                if (message.toLowerCase() === 'si') {
-
-                    await this.actions.createAppointment(session.data);
-
-                    session.step = null;
-                    session.intent = null;
-                    session.data = {};
-
-                    return { response: 'Cita agendada correctamente' };
-                }
-
-                if (message.toLowerCase() === 'no') {
-                    session.step = null;
-                    session.intent = null;
-                    session.data = {};
-
-                    return { response: 'Operación cancelada' };
-                }
-
-                return { response: 'Responde "SI" o "NO"' };
-
-            default:
-                return { response: 'Error en flujo' };
-        }
+        return this.prisma.chatbot_flows.findMany({
+            where: { intent_id: intentId },
+            orderBy: { step_order: 'asc' }
+        });
     }
 }

@@ -327,19 +327,19 @@ CREATE table audit_log (
   action_date TIMESTAMP
 )
 
+
 CREATE TABLE chatbot_sessions (
-  id SERIAL PRIMARY KEY,
-
-  session_id VARCHAR(100), -- phone o web session
-  intent VARCHAR(50),
-  step VARCHAR(50),
-
-  data JSONB,
-
-  patient_id INTEGER,
-
-  created_at TIMESTAMP,
-  updated_at TIMESTAMP
+	id serial4 NOT NULL,
+	session_id varchar(100) NULL,
+	step int4 NULL,
+	data jsonb NULL,
+	patient_id int4 NULL,
+	created_at timestamp NULL,
+	updated_at timestamp NULL,
+	intent_id int4 NULL,
+	CONSTRAINT chatbot_sessions_pkey PRIMARY KEY (id),
+	CONSTRAINT unique_session UNIQUE (session_id),
+	CONSTRAINT fk_chatbot_sessions_intent FOREIGN KEY (intent_id) REFERENCES chatbot_intents(id)
 );
 
 INSERT INTO roles (name, description, created_at)
