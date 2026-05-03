@@ -76,9 +76,17 @@ export class ChatbotFlowService {
 
         // AGENDAR CITA
         if (intentName === 'AGENDAR_CITA') {
-            console.log('DATA FINAL CITA:', session.data);
             if (!session.patient_id) {
                 return { response: 'Primero debes registrarte' };
+            }
+
+            if (!session.data.confirmed) {
+                session.data.confirmed = true;
+
+                return {
+                    response: `Confirmar cita: 📅 Fecha: ${session.data.date} ⏰ Hora: ${session.data.time}. Responde SI para confirmar
+                    `
+                };
             }
 
             const result = await this.actions.createAppointment({
@@ -94,10 +102,14 @@ export class ChatbotFlowService {
             session.data = {};
 
             if (!result) {
-                return { response: 'No se pudo crear la cita, faltan datos' };
+                return {
+                    response: 'Hubo un problema al agendar la cita, intentemos nuevamente paso a paso 😊'
+                };
             }
 
-            return { response: 'Cita creada correctamente' };
+            return {
+                response: `Tu cita fue agendada correctamente. Te esperamos 😊`
+            };
         }
 
         // REGISTRAR PACIENTE

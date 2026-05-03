@@ -11,7 +11,7 @@ export class ChatbotService {
         private ai: ChatbotAiService,
         private sessionService: ChatbotSessionService,
         private flowService: ChatbotFlowService,
-        private actions: ChatbotActionsService
+        private actions: ChatbotActionsService,
     ) { }
 
     async processMessage(dto: any) {
@@ -74,11 +74,19 @@ export class ChatbotService {
             return response;
         }
 
-        // IA
-        const intent = await this.ai.detectIntent(dto.message);
+        //Clean Message
+        const cleanMessage = await this.normalizeText(dto.message);
 
+        // IA
+        const intent = await this.ai.detectIntent(cleanMessage);
 
         let intentType = intent.type;
+
+        if (intentType === 'SECURITY_BLOCK') {
+            return {
+                response: 'No puedo proporcionar ese tipo de información 😊'
+            };
+        }
 
         // mapear intención
         if (intentType === 'LISTAR_DOCTORES') {
@@ -89,6 +97,22 @@ export class ChatbotService {
 
         if (!session.intent_id && intentDb) {
             session.intent_id = intentDb.id;
+        }
+
+        const forbiddenWords = [
+            'usuarios',
+            'base de datos',
+            'todos los pacientes',
+            'contraseñas',
+            'registros',
+        ];
+
+        const text = dto.message.toLowerCase();
+
+        if (forbiddenWords.some(w => text.includes(w))) {
+            return {
+                response: 'No puedo ayudarte con esa información.'
+            };
         }
 
         // SIEMPRE intentar rellenar datos
@@ -113,6 +137,14 @@ export class ChatbotService {
                     session.step = 1;
                 }
             }
+
+            if (intent.data.date && !session.data.date && session.data.date) {
+                session.data.date = this.actions.parseDate(intent.data.date);
+            }
+
+            if (intent.data.time && !session.data.time) {
+                session.data.time = this.actions.parseTime(intent.data.time);
+            }
         }
 
         const response = await this.flowService.handleFlow(
@@ -136,5 +168,16 @@ export class ChatbotService {
         };
 
         return this.processMessage(dto);
+    }
+
+    async normalizeText(text: string): Promise<string> {
+        return text
+            .toLowerCase()
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "") // quitar tildes
+            .replace(/manana/g, "mañana")
+            .replace(/manan/g, "mañana")
+            .replace(/miercoles/g, "miércoles")
+            .replace(/sabado/g, "sábado");
     }
 }

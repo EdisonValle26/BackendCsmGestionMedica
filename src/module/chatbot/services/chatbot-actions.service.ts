@@ -199,12 +199,57 @@ export class ChatbotActionsService {
     parseDate(dateStr: string): Date | null {
         if (!dateStr) return null;
 
-        const text = dateStr.toLowerCase();
+        const text = dateStr.toLowerCase().trim();
 
+        const today = new Date();
+
+        // hoy
         if (text.includes('hoy')) {
-            return new Date();
+            return today;
         }
 
+        // mañana (soporta errores tipo "manana", "mañan")
+        if (text.match(/manan|mañan/)) {
+            const d = new Date(today);
+            d.setDate(d.getDate() + 1);
+            return d;
+        }
+
+        // pasado mañana
+        if (text.includes('pasado')) {
+            const d = new Date(today);
+            d.setDate(d.getDate() + 2);
+            return d;
+        }
+
+        // días de la semana
+        const daysMap: any = {
+            domingo: 0,
+            lunes: 1,
+            martes: 2,
+            miercoles: 3,
+            miércoles: 3,
+            jueves: 4,
+            viernes: 5,
+            sabado: 6,
+            sábado: 6,
+        };
+
+        for (const day in daysMap) {
+            if (text.includes(day)) {
+                const targetDay = daysMap[day];
+                const currentDay = today.getDay();
+
+                let diff = targetDay - currentDay;
+                if (diff <= 0) diff += 7;
+
+                const d = new Date(today);
+                d.setDate(today.getDate() + diff);
+                return d;
+            }
+        }
+
+        // fallback normal
         const parsed = new Date(dateStr);
         return isNaN(parsed.getTime()) ? null : parsed;
     }
@@ -212,9 +257,34 @@ export class ChatbotActionsService {
     parseTime(timeStr: string): string | null {
         if (!timeStr) return null;
 
-        const match = timeStr.match(/(\d{1,2}):(\d{2})/);
-        if (!match) return null;
+        const text = timeStr.toLowerCase().trim();
 
-        return `${match[1].padStart(2, '0')}:${match[2]}`;
+        // 3pm, 3 pm, 3 de la tarde
+        const hourMatch = text.match(/(\d{1,2})/);
+        if (!hourMatch) return null;
+
+        let hour = parseInt(hourMatch[1]);
+        let minutes = 0;
+
+        // detectar minutos si existen
+        const minMatch = text.match(/:(\d{2})/);
+        if (minMatch) {
+            minutes = parseInt(minMatch[1]);
+        }
+
+        // contexto
+        if (text.includes('tarde') || text.includes('pm')) {
+            if (hour < 12) hour += 12;
+        }
+
+        if (text.includes('noche')) {
+            if (hour < 12) hour += 12;
+        }
+
+        if (text.includes('mañana') || text.includes('am')) {
+            if (hour === 12) hour = 0;
+        }
+
+        return `${String(hour).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
     }
 }

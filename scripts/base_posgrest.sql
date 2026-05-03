@@ -299,35 +299,6 @@ CREATE table chatbot_flows (
 )
 
 
-CREATE table chatbot_logs (
-  id SERIAL PRIMARY KEY,
-
-  user_phone VARCHAR(20),
-  intent_id INTEGER,
-  
-  message TEXT,
-  response TEXT,
-
-  created_at TIMESTAMP
-)
-
-
-CREATE table audit_log (
-  id SERIAL PRIMARY KEY,
-
-  table_name VARCHAR(100),
-  record_id INTEGER,
-
-  action VARCHAR(20), -- INSERT, UPDATE, DELETE
-
-  old_data JSONB,
-  new_data JSONB,
-
-  user_id INTEGER,
-  action_date TIMESTAMP
-)
-
-
 CREATE TABLE chatbot_sessions (
 	id serial4 NOT NULL,
 	session_id varchar(100) NULL,
@@ -413,3 +384,20 @@ INSERT INTO permissions (name, code) VALUES
 ('Leer', 'READ'),
 ('Actualizar', 'UPDATE'),
 ('Eliminar', 'DELETE');
+
+
+INSERT INTO chatbot_flows (intent_id, step_order, question, field_name)
+VALUES
+(1, 1, '¿Qué especialidad necesitas?', 'specialty'),
+(1, 2, 'Selecciona un doctor (número):', 'doctor_id'),
+(1, 3, '¿Qué fecha deseas? (YYYY-MM-DD)', 'date'),
+(1, 4, '¿Qué hora deseas?', 'time'),
+(1, 5, 'Confirma la cita (SI/NO)', 'confirm');
+
+
+INSERT INTO chatbot_flows (intent_id, step_order, question, field_name)
+VALUES
+(2, 1, '¿Cuál es tu nombre?', 'first_name'),
+(2, 2, '¿Cuál es tu apellido?', 'last_name'),
+(2, 3, '¿Cuál es tu número de teléfono?', 'phone'),
+(2, 4, 'Confirma registro (SI/NO)', 'confirm');

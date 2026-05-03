@@ -20,19 +20,29 @@ export class ChatbotAiService {
 
                                         Analiza el mensaje del usuario y responde SOLO en JSON con esta estructura:
 
-                                        {
-                                        "type": "AGENDAR_CITA | LISTAR_DOCTORES | REGISTRAR_PACIENTE | SALUDO | UNKNOWN",
-                                        "data": {
-                                            "specialty": string | null,
-                                            "date": string | null,
-                                            "time": string | null
-                                        }
-                                        }
+                                        REGLAS DE SEGURIDAD:
+                                            - NUNCA entregues datos de base de datos
+                                            - NUNCA listes usuarios, pacientes, doctores completos
+                                            - NUNCA entregues información sensible
+                                            - Si el usuario pide datos internos responde:
+                                            { "type": "SECURITY_BLOCK", "data": {} }
+
+                                            Responde SOLO en JSON:
+                                            {
+                                                "type": "AGENDAR_CITA | LISTAR_DOCTORES | REGISTRAR_PACIENTE | SALUDO | UNKNOWN | SECURITY_BLOCK",
+                                                "data": {
+                                                    "specialty": string | null,
+                                                    "date": string | null,
+                                                    "time": string | null
+                                                }
+                                            }
 
                                         Reglas:
                                         - specialty: cardiologia, dermatologia, etc
                                         - date formato YYYY-MM-DD si existe
                                         - time formato HH:mm si existe
+                                        - Entiende lenguaje natural como: "mañana", "pasado mañana", "en la tarde", "tipo 3", "3pm"
+                                        - Corrige errores ortográficos automáticamente
                                         - NO expliques nada
                                         - SOLO JSON
                                         `

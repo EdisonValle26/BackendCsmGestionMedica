@@ -32,17 +32,6 @@ model appointments {
   medical_records                                     medical_records[]
 }
 
-model audit_log {
-  id          Int       @id @default(autoincrement())
-  table_name  String?   @db.VarChar(100)
-  record_id   Int?
-  action      String?   @db.VarChar(20)
-  old_data    Json?
-  new_data    Json?
-  user_id     Int?
-  action_date DateTime? @db.Timestamp(6)
-}
-
 model catalog_types {
   id         Int        @id @default(autoincrement())
   code       String?    @db.VarChar(50)
@@ -89,15 +78,6 @@ model chatbot_intents {
   description      String?
   chatbot_flows    chatbot_flows[]
   chatbot_sessions chatbot_sessions[]
-}
-
-model chatbot_logs {
-  id         Int       @id @default(autoincrement())
-  user_phone String?   @db.VarChar(20)
-  intent_id  Int?
-  message    String?
-  response   String?
-  created_at DateTime? @db.Timestamp(6)
 }
 
 model doctor_schedule {
