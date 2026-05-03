@@ -74,11 +74,8 @@ export class ChatbotService {
             return response;
         }
 
-        //Clean Message
-        const cleanMessage = await this.normalizeText(dto.message);
-
         // IA
-        const intent = await this.ai.detectIntent(cleanMessage);
+        const intent = await this.ai.detectIntent(dto.message);
 
         let intentType = intent.type;
 
@@ -138,7 +135,7 @@ export class ChatbotService {
                 }
             }
 
-            if (intent.data.date && !session.data.date && session.data.date) {
+            if (intent.data.date && !session.data.date) {
                 session.data.date = this.actions.parseDate(intent.data.date);
             }
 
@@ -170,14 +167,4 @@ export class ChatbotService {
         return this.processMessage(dto);
     }
 
-    async normalizeText(text: string): Promise<string> {
-        return text
-            .toLowerCase()
-            .normalize("NFD")
-            .replace(/[\u0300-\u036f]/g, "") // quitar tildes
-            .replace(/manana/g, "mañana")
-            .replace(/manan/g, "mañana")
-            .replace(/miercoles/g, "miércoles")
-            .replace(/sabado/g, "sábado");
-    }
 }
